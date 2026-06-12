@@ -1,0 +1,11 @@
+# Example edge-agent config. One file per box wired to a machine. Run:
+#   factory-edge-agent --config examples/agent.toml
+
+gateway_url   = "opc.tcp://gateway.local:4840/"   # the factory-gateway endpoint
+machine_id    = "howick-1"                         # which Machines/<id> this agent drives
+namespace_uri = "http://joeblew999.github.io/factory-floor/"
+
+[howick]                          # the Howick driver's config (factory-howick-driver)
+usb_mount       = "/mnt/usb_share"   # where the FRAMA reads cut-lists from
+usb_gadget_mode = true               # true on a Pi Zero acting as USB mass storage
+coil_sensor     = true
