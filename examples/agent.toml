@@ -2,7 +2,8 @@
 #   factory-edge-agent --config examples/agent.toml
 
 gateway_url   = "opc.tcp://gateway.local:4840/"   # the factory-gateway endpoint
-machine_id    = "howick-1"                         # which Machines/<id> this agent drives
+machine_id    = "howick-1"            # which Machines/<id> in the gateway this agent drives
+driver        = "howick-frama"        # which driver to run (a new machine type = a new driver, same binary)
 namespace_uri = "http://joeblew999.github.io/factory-floor/"
 
 [howick]                          # the Howick driver's config (factory-howick-driver)

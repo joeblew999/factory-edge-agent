@@ -9,12 +9,16 @@
 //!   1. Connect to the gateway, resolve the namespace.
 //!   2. **Subscribe** to `Machines/<id>/EdgeAgent/PendingJobId` — the gateway
 //!      pushes the instant a job is dispatched to this machine.
-//!   3. Read `PendingJobCsv`, run the local driver ([`HowickFrama`] writes the
-//!      cut-list to the FRAMA's USB), then call `JobOrderReceiver/ReportComplete`.
+//!   3. Read `PendingJobCsv`, run the local driver (chosen from the [`registry`]
+//!      by the config's `driver`), then call `JobOrderReceiver/ReportComplete`.
+//!
+//! One binary runs **any** machine type — adding one is a new driver crate
+//! registered in [`registry`], never a new agent binary.
 //!
 //! [factory-gateway]: https://github.com/joeblew999/factory-gateway
 
 pub mod config;
+pub mod registry;
 
 #[cfg(test)]
 mod e2e;
@@ -29,23 +33,24 @@ use opcua::types::{
     TimestampsToReturn, UserTokenPolicy, VariableId, Variant,
 };
 
-use factory_machine_model::{Identification, JobOrder, MachineDriver};
-use factory_howick_driver::HowickFrama;
+use factory_machine_model::JobOrder;
 
 use config::AgentConfig;
+use registry::DriverRegistry;
 
 /// Connect to the gateway and process jobs for this machine until the connection
 /// ends. Returns `Ok(())` only if the run loop exits cleanly.
 pub async fn run(config: AgentConfig) -> anyhow::Result<()> {
     let mid = config.machine_id.clone();
-    let driver = HowickFrama::new(
-        mid.clone(),
-        Identification::new("Howick", "FRAMA"),
-        config.howick.clone(),
-    );
+
+    // Pick the driver named in the config — one binary runs any machine type.
+    let registry = DriverRegistry::with_builtin_drivers();
+    let driver = registry.build(&config).map_err(|e| {
+        anyhow::anyhow!("{e} (this agent supports: {:?})", registry.supported_kinds())
+    })?;
 
     let url = config.gateway_url.trim_end_matches('/').to_string();
-    tracing::info!(%url, machine = %mid, "edge agent connecting to gateway");
+    tracing::info!(%url, machine = %mid, driver = %config.driver, "edge agent connecting to gateway");
 
     let mut client = ClientBuilder::new()
         .application_name("factory-edge-agent")

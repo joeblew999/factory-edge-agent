@@ -55,6 +55,7 @@ async fn job_flows_gateway_to_edge_agent_to_machine() {
         r#"
         gateway_url = "opc.tcp://127.0.0.1:{PORT}/"
         machine_id = "howick-1"
+        driver = "howick-frama"
         namespace_uri = "{NS_URI}"
         [howick]
         usb_mount = "{mount}"
